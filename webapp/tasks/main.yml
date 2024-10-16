@@ -1,22 +1,42 @@
 ---
-# tasks file for webapp
-- name: Template index.html.j2 to index.html on target
-  template:
-    src: index.html-easter_egg.j2
-    dest: "{{ target_dir }}/index.html"
-    mode: 0644
-  tags:
-    - deploy-app
-
-- name: Install unzip
+# tasks file for running a webapp in Docker
+- name: Install Docker
   package:
-    name: unzip
-    state: latest
-
-- name: Unarchive playbook stacker game
-  unarchive:
-    src: playbook_stacker.zip
-    dest: "{{ target_dir }}"
-    mode: 0755
+    name: docker
+    state: present
   tags:
-    - deploy-app
+    - install-docker
+
+- name: Start Docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  tags:
+    - start-docker
+
+- name: Build Docker image for webapp
+  docker_image:
+    name: my-webapp
+    build:
+      path: "{{ target_dir }}"
+    state: present
+  tags:
+    - build-webapp
+
+- name: Run webapp container
+  docker_container:
+    name: webapp
+    image: my-webapp:latest
+    state: started
+    ports:
+      - "80:80"
+  tags:
+    - run-webapp-container
+
+- name: Ensure webapp container is running
+  docker_container:
+    name: webapp
+    state: started
+  tags:
+    - ensure-webapp-running
