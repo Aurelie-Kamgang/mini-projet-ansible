@@ -30,7 +30,7 @@
     image: my-webapp:latest
     state: started
     ports:
-      - "80:80"
+      - "8082:8082"
   tags:
     - run-webapp-container
 
