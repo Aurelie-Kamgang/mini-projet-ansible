@@ -1,19 +1,19 @@
 ---
 # tasks file for running a webapp in Docker
-- name: Install Docker
-  package:
-    name: docker
-    state: present
-  tags:
-    - install-docker
+#- name: Install Docker
+#  package:
+#    name: docker
+#    state: present
+#  tags:
+#    - install-docker
 
-- name: Start Docker service
-  service:
-    name: docker
-    state: started
-    enabled: yes
-  tags:
-    - start-docker
+#- name: Start Docker service
+#  service:
+#    name: docker
+#    state: started
+#    enabled: yes
+#  tags:
+#    - start-docker
 
 - name: Build Docker image for webapp
   docker_image:
