@@ -1,17 +1,14 @@
 ---
 # YAML documents begin with the document separator ---
-
-# The minus in YAML this indicates a list item.  The playbook contains a list
-# of plays, with each play being a dictionary
-#
--
-
-  # Hosts: where our play will run and options it will run with
-  hosts: prod
+- hosts: staging
   become: true
-  # Roles: list of roles to be imported into the play 
   roles:
-    - { role: <FIX IT>, target_dir: "{%- if ansible_distribution == 'CentOS' -%}/usr/share/nginx/html{%- elif ansible_distribution == 'Ubuntu' -%}/var/www/html{%- endif %}" }
-
-# Three dots indicate the end of a YAML document
-...
+    # Le rôle Nginx doit être exécuté en premier
+    - role: nginx
+    
+    # Démarrer la deuxième instance de webapp
+    - role: webapp
+      vars:
+        container_name: "webapp1"
+        app_port: 8082
+        target_dir: "{%- if ansible_distribution == 'CentOS' -%}/usr/share/nginx/html{%- elif ansible_distribution == 'Ubuntu' -%}/var/www/html{%- endif %}"

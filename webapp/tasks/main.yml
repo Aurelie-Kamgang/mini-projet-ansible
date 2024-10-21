@@ -1,42 +1,75 @@
 ---
-# tasks file for running a webapp in Docker
-#- name: Install Docker
-#  package:
-#    name: docker
-#    state: present
-#  tags:
-#    - install-docker
+# tasks file for webapp
 
-#- name: Start Docker service
-#  service:
-#    name: docker
-#    state: started
-#    enabled: yes
-#  tags:
-#    - start-docker
+- name: Create a custom Docker network
+  community.docker.docker_network:
+    name: custom_net
+    driver: bridge
+
+- name: Install unzip
+  package:
+    name: unzip
+    state: present
+  tags:
+    - install-unzip
+
+- name: Ensure temporary directory for unarchiving exists
+  file:
+    path: /tmp/playbook_stacker
+    state: directory
+    mode: '0755'
+  tags:
+    - create-temp-dir
+
+- name: Unarchive playbook_stacker.zip to temporary directory
+  unarchive:
+    src: playbook_stacker.zip
+    dest: /tmp/playbook_stacker
+    mode: 0755
+  tags:
+    - unarchive-zip
+
+- name: Copy unarchived files to Nginx container
+  command: docker cp /tmp/playbook_stacker/playbook_stacker/playbook_stacker/ nginx:/usr/share/nginx/html/
+  tags:
+    - copy-files-to-container
 
 - name: Build Docker image for webapp
   docker_image:
     name: my-webapp
-    build:
-      path: "{{ target_dir }}"
+    build: 
+      path: "/tmp/playbook_stacker/playbook_stacker/playbook_stacker/"
+      dockerfile: Dockerfile
     state: present
+    tag: latest
+    source: build
   tags:
     - build-webapp
 
 - name: Run webapp container
   docker_container:
-    name: webapp
+    name: webapp1
     image: my-webapp:latest
     state: started
     ports:
-      - "8082:8082"
+      - "{{ app_port }}:80"
+    networks:
+      - name: custom_net
+    volumes:
+      - /tmp/playbook_stacker/playbook_stacker/playbook_stacker/:/usr/share/nginx/html
   tags:
     - run-webapp-container
 
 - name: Ensure webapp container is running
   docker_container:
-    name: webapp
+    name: webapp1
     state: started
   tags:
     - ensure-webapp-running
+
+- name: Ensure webapp container is running
+  docker_container:
+    name: nginx
+    state: started
+  tags:
+    - ensure-nginx-running
